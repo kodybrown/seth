@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{80C5C00E-280C-49C1-B2FC-4C6B1562CEE6}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Bricksoft.DosToys</RootNamespace>
+    <AssemblyName>seth</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputPath>..\Bin\</OutputPath>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputPath>..\Bin\</OutputPath>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if exist "C:\Kody\Root" xcopy "$(TargetPath)" "C:\Kody\Root" /y</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Label="Versioning">
+    <VersioningMajor>0</VersioningMajor>
+    <VersioningMinor>9</VersioningMinor>
+    <CommitVersion>N/A</CommitVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GitBinPath>C:\Tools\Git\bin</GitBinPath>
+  </PropertyGroup>
+  <UsingTask TaskName="GitVersion" AssemblyFile="C:\Tools\GitVersion.dll" />
+  <Target Name="BeforeBuild">
+    <GitVersion GitBinPath="$(GitBinPath)" CurrentPath="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="CommitVersion" PropertyName="CommitVersion" />
+      <Output TaskParameter="CommitCount" PropertyName="CommitCount" />
+    </GitVersion>
+    <Time Format="yyMMdd">
+      <Output TaskParameter="FormattedTime" PropertyName="BuildDate" />
+      <Output TaskParameter="Year" PropertyName="Year" />
+    </Time>
+    <AssemblyInfo CodeLanguage="CS" OutputFile="Properties\AssemblyInfo.cs" AssemblyTitle="seth ver:$(VersioningMajor).$(VersioningMinor).$(BuildDate.Substring(1)).$(CommitCount)" AssemblyDescription="seth" AssemblyCompany="" AssemblyProduct="seth" AssemblyCopyright="Copyright (C) 2003-$(Year) Kody Brown." ComVisible="false" CLSCompliant="false" Guid="0F6C111B-9FE1-4828-BFCE-729E2CB8A012" AssemblyVersion="$(VersioningMajor).$(VersioningMinor).$(BuildDate.Substring(1)).$(CommitCount)" AssemblyFileVersion="$(VersioningMajor).$(VersioningMinor).$(BuildDate.Substring(1)).$(CommitCount)" />
+    <Message Text="$(VersioningMajor).$(VersioningMinor).$(BuildDate.Substring(1)).$(CommitCount)" />
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>

@@ -8,7 +8,7 @@
     <ProjectGuid>{80C5C00E-280C-49C1-B2FC-4C6B1562CEE6}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Bricksoft.DosToys</RootNamespace>
+    <RootNamespace>Bricksoft.DosToys.seth</RootNamespace>
     <AssemblyName>seth</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>

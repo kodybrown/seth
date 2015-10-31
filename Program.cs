@@ -1,5 +1,5 @@
 ﻿//
-// Copyright (C) 2013 Kody Brown (kody@bricksoft.com).
+// Copyright (C) 2003-2015 Kody Brown (kody@bricksoft.com).
 // 
 // MIT License:
 // 
@@ -25,18 +25,29 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
+using System.Text;
+using Bricksoft.PowerCode;
 
-namespace seth
+namespace Bricksoft.DosToys.seth
 {
 	public class Program
 	{
-		private static int maxNameWidth = 30;
+		private static bool pausePerPage = false;
+		private static bool pauseAtEnd = false;
+		private static bool dontWrapOutput = false;
+		private static int width = Console.WindowWidth;
+		private static int envarIndentation = 30;
+		private static bool rightAligned = true;
 
-		private static bool pp = false;
-		private static bool machineOnly = false;
-		private static bool processOnly = false;
-		private static bool userOnly = false;
-		private static bool lowerKey = false;
+		private static bool showAll = true;
+		private static bool showMachine = false;
+		private static bool showProcess = false;
+		private static bool showUser = false;
+		private static bool? lowerKey = null;
+
+		private static string filter = "";
 
 		public static int Main( string[] arguments )
 		{
@@ -45,60 +56,170 @@ namespace seth
 			//Console.WindowHeight = Console.LargestWindowHeight - 1;
 			//Console.BufferHeight = 1000;
 
-			foreach (string a in arguments) {
-				if (a.StartsWith("/") || a.StartsWith("-")) {
-					string arg = a.Substring(1);
-					if (arg.Equals("p", StringComparison.CurrentCultureIgnoreCase)) {
-						//p = true;
-					} else if (arg.Equals("pp", StringComparison.CurrentCultureIgnoreCase)) {
-						pp = true;
-					} else if (arg.StartsWith("m", StringComparison.CurrentCultureIgnoreCase)) {
-						machineOnly = true;
-					} else if (arg.StartsWith("p", StringComparison.CurrentCultureIgnoreCase)) {
-						processOnly = true;
-					} else if (arg.StartsWith("u", StringComparison.CurrentCultureIgnoreCase)) {
-						userOnly = true;
-					} else if (arg.StartsWith("a", StringComparison.CurrentCultureIgnoreCase)) {
-						// do nothing..
-					} else if (arg.StartsWith("l", StringComparison.CurrentCultureIgnoreCase)) {
-						lowerKey = true;
-					} else if (arg.Equals("?", StringComparison.CurrentCultureIgnoreCase)) {
-						showUsage();
+			for (int i = 0; i < arguments.Length; i++) {
+				string arg = arguments[i];
+				bool isOpt = false;
+
+				while (arg.StartsWith("/") || arg.StartsWith("-")) {
+					arg = arg.Substring(1);
+					isOpt = true;
+				}
+
+				if (isOpt) {
+					if (arg == "?" || arg.Equals("h", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("help", StringComparison.CurrentCultureIgnoreCase)) {
+						ShowUsage();
 						return 0;
+
+					} else if (arg.Equals("v", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("version", StringComparison.CurrentCultureIgnoreCase)) {
+						ShowVersion(arg.Equals("version", StringComparison.CurrentCultureIgnoreCase));
+						return 0;
+
+					} else if (arg.Equals("p", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("pause", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("pause-per-page", StringComparison.CurrentCultureIgnoreCase)) {
+						pausePerPage = true;
+					} else if (arg.Equals("pp", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("pause-at-end", StringComparison.CurrentCultureIgnoreCase)) {
+						pauseAtEnd = true;
+
+					} else if (arg.Equals("no-wrap", StringComparison.CurrentCultureIgnoreCase)) {
+						dontWrapOutput = true;
+					} else if (arg.StartsWith("wrap", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.StartsWith("width", StringComparison.CurrentCultureIgnoreCase)) {
+						int pos = arg.IndexOfAny(new char[] { '=', ':' });
+						if (pos == -1) {
+							Console.Error.WriteLine("invalid option: " + arg);
+							return 1;
+						}
+						string tmp = arg.Substring(pos + 1).Trim();
+						int tmpWrap = 0;
+						if (!int.TryParse(tmp, out tmpWrap)) {
+							Console.Error.WriteLine("invalid option: " + arg);
+							return 1;
+						}
+						width = Math.Max(20, tmpWrap);
+
+					} else if (arg.Equals("no-indent", StringComparison.CurrentCultureIgnoreCase)) {
+						envarIndentation = 0;
+					} else if (arg.StartsWith("indent", StringComparison.CurrentCultureIgnoreCase)) {
+						int pos = arg.IndexOfAny(new char[] { '=', ':' });
+						if (pos == -1) {
+							Console.Error.WriteLine("invalid option: " + arg);
+							return 1;
+						}
+						string tmp = arg.Substring(pos + 1).Trim();
+						int tmpIndent = 0;
+						if (!int.TryParse(tmp, out tmpIndent)) {
+							Console.Error.WriteLine("invalid option: " + arg);
+							return 1;
+						}
+						envarIndentation = Math.Max(0, tmpIndent);
+
+					} else if (arg.StartsWith("align", StringComparison.CurrentCultureIgnoreCase)) {
+						int pos = arg.IndexOfAny(new char[] { '=', ':' });
+						if (pos == -1) {
+							Console.Error.WriteLine("invalid option: " + arg);
+							return 1;
+						}
+						string tmp = arg.Substring(pos + 1).Trim();
+						if (tmp.StartsWith("l", StringComparison.CurrentCultureIgnoreCase)) {
+							rightAligned = false;
+						} else if (tmp.StartsWith("r", StringComparison.CurrentCultureIgnoreCase)) {
+							rightAligned = true;
+						} else {
+							Console.Error.WriteLine("invalid option: " + arg);
+							return 1;
+						}
+
+					} else if (arg.Equals("lower", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("lower-case", StringComparison.CurrentCultureIgnoreCase)) {
+						lowerKey = true;
+					} else if (arg.Equals("upper", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("upper-case", StringComparison.CurrentCultureIgnoreCase)) {
+						lowerKey = false;
+
+					} else if (arg.Equals("all", StringComparison.CurrentCultureIgnoreCase)) {
+						showAll = true;
+					} else if (arg.Equals("machine", StringComparison.CurrentCultureIgnoreCase)) {
+						showMachine = true;
+						showAll = false;
+					} else if (arg.Equals("process", StringComparison.CurrentCultureIgnoreCase)) {
+						showProcess = true;
+						showAll = false;
+					} else if (arg.Equals("user", StringComparison.CurrentCultureIgnoreCase)) {
+						showUser = true;
+						showAll = false;
+
+					} else {
+						Console.Error.WriteLine("unknown command: " + arg);
+						return 2;
 					}
+				} else {
+					filter = (filter + " " + arg).Trim();
 				}
 			}
 
-			string pad = new string('-', maxNameWidth);
+			StringBuilder s = new StringBuilder();
 
-			if (machineOnly) {
-				WriteCenteredLine('-', " Machine Environment Variables ");
-				ShowVariables(Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine));
-			} else if (processOnly) {
-				WriteCenteredLine('-', " Process Environment Variables ");
-				ShowVariables(Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process));
-			} else if (userOnly) {
-				WriteCenteredLine('-', " User Environment Variables ");
-				ShowVariables(Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User));
+			if (showAll) {
+				// Show all..
+				Text.WriteCenteredLine(" All Environment Variables ", '-');
+				ShowVariables(Environment.GetEnvironmentVariables(), s);
 			} else {
-				// Combine all..
-				WriteCenteredLine('-', " All Environment Variables ");
-				ShowVariables(Environment.GetEnvironmentVariables());
+				if (showMachine) {
+					Text.WriteCenteredLine(" Machine Environment Variables ", '-');
+					ShowVariables(Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine), s);
+				}
+				if (showProcess) {
+					Text.WriteCenteredLine(" Process Environment Variables ", '-');
+					ShowVariables(Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process), s);
+				}
+				if (showUser) {
+					Text.WriteCenteredLine(" User Environment Variables ", '-');
+					ShowVariables(Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User), s);
+				}
 			}
 
-			if (pp) {
-				PressAnyKey();
+			// Write the results to the screen
+			if (console.IsOutputRedirected || dontWrapOutput) {
+				Console.Out.Write(s.ToString());
+			} else {
+				int count = 0;
+
+				if (pausePerPage) {
+					string[] lines = s.ToString().Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+					int h = Console.WindowHeight;
+
+					for (int i = 0; i < lines.Length; i++) {
+						if (count >= h - 1) {
+							console.PressAnyKey("Press any key to continue");
+							count = 0;
+						}
+						Console.Out.WriteLine(lines[i].TrimEnd());
+						count++;
+					}
+				} else {
+					Console.Out.Write(s.ToString());
+				}
+
+				if (pauseAtEnd && (!pausePerPage || count > 0)) {
+					console.PressAnyKey();
+				}
 			}
 
 			return 0;
 		}
 
-		private static void ShowVariables( IDictionary envs )
+		private static void ShowVariables( IDictionary envars, StringBuilder s )
 		{
 			List<string> names = new List<string>();
 			int w = 0;
 
-			foreach (DictionaryEntry de in envs) {
+			//const string wrappedLineSymbol = "└─»";
+
+			foreach (DictionaryEntry de in envars) {
 				names.Add(de.Key.ToString());
 				w = Math.Max(w, de.Key.ToString().Length + 1);
 			}
@@ -106,192 +227,129 @@ namespace seth
 			names.Sort();
 
 			// Set max width, just in case
-			w = Math.Min(w, maxNameWidth);
+			w = Math.Min(w, envarIndentation);
 			string key, value,
 				sep = " = ";
 
 			for (int n = 0; n < names.Count; n++) {
-				if (lowerKey) {
-					key = names[n].ToLower();
+				if (lowerKey.HasValue) {
+					if (lowerKey.Value) {
+						key = names[n].ToLowerInvariant();
+					} else {
+						key = names[n].ToUpperInvariant();
+					}
 				} else {
 					key = names[n];
 				}
-				value = envs[names[n]].ToString();
+				value = envars[names[n]].ToString();
+
+				bool containsPath = false;
+				string[] ar = new string[] { };
+				string dir = rightAligned ? "" : "-";
+				int tempWidth = w;
+
+				// This indents subsequent paths to match the envar name,
+				// at whatever indentation it is at:
+				// >seth --indent=0
+				// PATH ╤ C:\Program Files (x86)\iis express\PHP\v5.4;
+				//      ├ C:\Program Files (x86)\PHP\v5.6;
+				//      └ C:\bin;
+				// PSModulePath ╤ C:\Windows\system32\WindowsPowerShell\v1.0\Modules\;
+				//              ├ C:\Program Files (x86)\Microsoft SQL Server\120\Tools\PowerShell\Modules\;
+				//              └ C:\Program Files (x86)\Microsoft SDKs\Azure\PowerShell\ServiceManagement;
+				tempWidth = Math.Max(w, key.Length);
+
 				if (value.IndexOf('\\') > -1 && value.IndexOf(';') > -1) {
-					string[] ar = value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+					ar = value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+					if (ar.Length > 1) {
+						containsPath = true;
+					} else {
+						containsPath = false;
+					}
+				}
 
-					Console.WriteLine(Text.Wrap(string.Format("{0," + w + "}{1}{2};", key, sep, ar[0]), Console.WindowWidth - w - sep.Length, 0, w + sep.Length));
-					//WritePrefixedLine("└─ ", Text.Wrap(string.Format("{0," + w + "}{1}{2};", key, sep, ar[0]), Console.WindowWidth - w - sep.Length, 0, w + sep.Length + 3));
-					//--WritePrefixedLine("└─ ", w + sep.Length, Text.Wrap(string.Format("{0," + w + "}{1}{2};", key, sep, ar[0]), Console.WindowWidth - w - sep.Length - 3, 0, 3));
-					//---WritePrefixedLine("└──", w + "└──".Length, Text.Wrap(string.Format("{0," + w + "}{1}{2}", key, sep, ar[0]), Console.WindowWidth - w - sep.Length, w + sep.Length, 0));
+				if (containsPath && ar.Length > 0) {
+					if (console.IsOutputRedirected || dontWrapOutput) {
+						s.AppendLine(string.Format("{0," + dir + w + "}{1}{2};", key, sep, ar[0]));
 
-					for (int i = 1; i < ar.Length; i++) {
-						WritePrefixedLine("└──", w + "└──".Length, Text.Wrap(string.Format("{0};", ar[i]), Console.WindowWidth - w - sep.Length, w + sep.Length, 0));
-						//--WritePrefixedLine("└─ ", w + sep.Length, Text.Wrap(string.Format("{0};", ar[i]), Console.WindowWidth - w - sep.Length - 3, 0, 3));
+						for (int i = 1; i < ar.Length; i++) {
+							s.AppendFormat("{0," + dir + w + "}{0," + sep.Length + "}{1};", " ", ar[i])
+							 .AppendLine();
+						}
+					} else {
+						string tempSep = ""; //┬╤
+
+						s.AppendLine(Text.Wrap(string.Format("{0," + dir + w + "}{1}{2}", key, " ╤ ", ar[0] + "; ")
+							, new int[] { width }
+							, new int[] { 0, w + sep.Length }));
+
+						for (int i = 1; i < ar.Length; i++) {
+							if (i == ar.Length - 1) {
+								tempSep = " └ ";
+							} else {
+								tempSep = " ├ ";
+							}
+
+							s.AppendLine(Text.Wrap(string.Format("{0," + dir + tempWidth + "}{1}{2}", " ", tempSep, ar[i] + ";")
+								, new int[] { width }
+								, new int[] { 0, tempWidth + sep.Length }));
+						}
 					}
 				} else {
-					//works! --Console.WriteLine("{0," + w + "}{1}{2}", key, sep, value);
-					Console.WriteLine("{0," + w + "}{1}{2}", key, sep, Text.Wrap(value, Console.WindowWidth - w - sep.Length, 0, w + sep.Length));
-
-					//Console.WriteLine(Text.Wrap(string.Format("{0," + w + "}{1}{2}", key, sep, value), Console.WindowWidth - 1, 0, w + sep.Length + 3));
-					//--WritePrefixedLine("└─ ", w + sep.Length, Text.Wrap(string.Format("{0," + w + "}{1}{2}", key, sep, value), Console.WindowWidth - 1, 0, w + sep.Length + 3));
+					if (console.IsOutputRedirected || dontWrapOutput) {
+						s.AppendLine(string.Format("{0," + dir + w + "}{1}{2}", key, sep, value));
+					} else {
+						s.AppendLine(Text.Wrap(string.Format("{0," + dir + w + "}{1}{2}", key, sep, value)
+							, new int[] { width }
+							, new int[] { 0, tempWidth + sep.Length }));
+					}
 				}
 			}
 		}
 
-		private static void WritePrefixedLine( string prefix, int indentation, string s )
+		private static void ShowVersion( bool fullVersion )
 		{
-			string[] lines = s.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-			string pad = new string(' ', indentation);
-
-			for (int l = 0; l < lines.Length; l++) {
-				if (l > 0) {
-					Console.WriteLine(pad + prefix + lines[l]);
-				} else {
-					Console.WriteLine(lines[l]);
-				}
+			FileVersionInfo fi = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
+			if (fullVersion) {
+				Console.WriteLine("{0}.exe v{1}", fi.ProductName.ToLowerInvariant(), fi.FileVersion);
+				Console.WriteLine(fi.LegalCopyright);
+			} else {
+				Console.WriteLine(fi.FileVersion);
 			}
 		}
 
-		private static void showUsage()
+		private static void ShowUsage()
 		{
-			Console.WriteLine("seth.exe");
-			Console.WriteLine("displays the current environment variables.");
+			ShowVersion(true);
+
+			int indentation = 16 + 2;
+
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("Displays the environment variables with various options.", width, 2));
 			Console.WriteLine();
 			Console.WriteLine("USAGE: seth [options]");
 			Console.WriteLine();
-			Console.WriteLine("   -p   pauses at the end");
-			Console.WriteLine("   -pp  pauses after each screenful (applies -p)");
+			Console.WriteLine(Text.Wrap("/?, -h          show this help", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("-p, --pause     pauses after each screenful (applies -pp)", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("-pp             pauses at the end", width, 2, indentation));
 			Console.WriteLine();
-		}
-
-		private static void WriteCenteredLine( char ch, string s )
-		{
-			int w;
-			string pad;
-
-			w = (Console.WindowWidth - s.Length) / 2 - 1;
-
-			pad = new string(ch, w);
-
+			Console.WriteLine(Text.Wrap("--no-wrap       outputs formatted output, but without wrapping envar values. this format is used when the output is being redirected.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--wrap=n        forces wrapping at n characters instead of the window width. enforces minimum value of 20.", width, 2, indentation));
 			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--align=[l|r]   aligns the envar name left or right. the default is right aligned (next to the equal sign).", width, 2, indentation));
 			Console.WriteLine();
-			Console.SetCursorPosition(0, Console.CursorTop - 2);
-			Console.WriteLine(pad + s + pad);
-		}
-
-		private static void PressAnyKey()
-		{
-			WriteCenteredLine('-', " Press any key to exit ");
-
-			Console.CursorVisible = false;
-			Console.ReadKey(true);
-			Console.SetCursorPosition(0, Console.CursorTop);
-
-			Console.WriteLine(new string(' ', Console.WindowWidth - 1));
-			Console.CursorVisible = true;
-		}
-	}
-
-	public static class Text
-	{
-		internal static char[] lineBreaks = new char[] { ' ', '.', ',', '-', ':', ';', '>', '"', ']', '}', '!', '?', ')', '\\', '/' };
-
-		/* ----- WrapText() ----- */
-
-		public static string Wrap( string Text ) { return Wrap(Text, null, null); }
-
-		public static string Wrap( string Text, int WrapWidth ) { return Wrap(Text, WrapWidth, 0); }
-
-		public static string Wrap( string Text, int WrapWidth, params int[] Indentations ) { return Wrap(Text, new int[] { WrapWidth }, Indentations); }
-
-		public static string Wrap( string Text, int[] WrapWidths, int[] Indentations )
-		{
-			List<string> ar;
-			string temp;
-			int brk;
-			int w;
-			int wrapIndex, idIndex;
-			List<string> ids;
-
-			if (WrapWidths == null || WrapWidths.Length == 0) {
-				WrapWidths = new int[] { Console.WindowWidth };
-			}
-			if (Indentations == null || Indentations.Length == 0) {
-				Indentations = new int[] { 0 };
-			}
-
-			brk = -1;
-			ar = new List<string>(Text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None));
-			wrapIndex = 0;
-			idIndex = 0;
-			ids = new List<string>(Indentations.Length);
-
-			Func<int> wrapWidthIdx = delegate()
-			{
-				return Math.Min(wrapIndex, WrapWidths.Length - 1);
-			};
-			Func<int> identIdx = delegate()
-			{
-				return Math.Min(idIndex, Indentations.Length - 1);
-			};
-
-			foreach (int indent in Indentations) {
-				ids.Add(new string(' ', indent));
-			}
-
-			for (int i = 0; i < ar.Count; i++) {
-				w = WrapWidths[wrapWidthIdx()] - Indentations[identIdx()] - 1;
-				if (ar[i].Length > w) {
-					temp = ar[i];
-					brk = temp.Substring(0, w).LastIndexOfAny(lineBreaks) + 1;
-
-					ar[i] = ids[identIdx()] + temp.Substring(0, brk);
-					wrapIndex++;
-					idIndex++;
-					i++;
-
-					//temp = temp.Substring(brk);
-					if (brk < temp.Length - 1 && temp[brk] == ' ') {
-						temp = temp.Substring(brk + 1);
-					} else {
-						temp = temp.Substring(brk);
-					}
-
-					while (temp.Length > 0) {
-						w = WrapWidths[wrapWidthIdx()] - Indentations[identIdx()] - 1;
-						if (temp.Length > w) {
-							brk = temp.Substring(0, w).LastIndexOfAny(lineBreaks) + 1;
-							if (brk == 0) {
-								// The string could not be broken up nicely, 
-								// so just cut the line at the wrap width..
-								brk = w;
-							}
-						} else {
-							brk = temp.Length;
-						}
-
-						ar.Insert(i, ids[identIdx()] + temp.Substring(0, brk));
-						wrapIndex++;
-						idIndex++;
-						i++;
-
-						if (brk < temp.Length - 1 && temp[brk] == ' ') {
-							temp = temp.Substring(brk + 1);
-						} else {
-							temp = temp.Substring(brk);
-						}
-					}
-				} else {
-					ar[i] = ids[identIdx()] + ar[i];
-				}
-
-				wrapIndex++;
-				idIndex++;
-			}
-
-			//return string.Join(Environment.NewLine + padding, ar);
-			return string.Join("\n", ar);
+			Console.WriteLine(Text.Wrap("--indent=n      sets the envar name indentation. the default is " + envarIndentation + " characters.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--no-indent     sets the envar name indentation to 0.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--lower         lower-cases the envar names.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--upper         upper-cases the envar names.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("                if --lower and --upper are not specified, the envar name is not modified.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--machine       shows only the machine-level environment variables.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--process       shows only the process-level environment variables.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--user          shows only the user environment variables.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--all           shows all environment variables regardless of where it came from. this is the default behavior.", width, 2, indentation));
+			Console.WriteLine();
 		}
 	}
 }

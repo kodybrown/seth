@@ -34,12 +34,15 @@ namespace Bricksoft.DosToys.seth
 {
 	public class Program
 	{
+		private static int DEFAULT_ENVAR_INDENT = 16;
+		private static bool DEFAULT_ENVAR_ALIGN = false;
+
 		private static bool pausePerPage = false;
 		private static bool pauseAtEnd = false;
 		private static bool dontWrapOutput = false;
 		private static int width = Console.WindowWidth;
-		private static int envarIndentation = 30;
-		private static bool rightAligned = true;
+		private static int envarIndentation = DEFAULT_ENVAR_INDENT;
+		private static bool rightAligned = DEFAULT_ENVAR_ALIGN;
 
 		private static bool showAll = true;
 		private static bool showMachine = false;
@@ -281,7 +284,7 @@ namespace Bricksoft.DosToys.seth
 
 						s.AppendLine(Text.Wrap(string.Format("{0," + dir + w + "}{1}{2}", key, " ╤ ", ar[0] + "; ")
 							, new int[] { width }
-							, new int[] { 0, w + sep.Length }));
+							, new int[] { 0, tempWidth + sep.Length }));
 
 						for (int i = 1; i < ar.Length; i++) {
 							if (i == ar.Length - 1) {
@@ -336,9 +339,9 @@ namespace Bricksoft.DosToys.seth
 			Console.WriteLine(Text.Wrap("--no-wrap       outputs formatted output, but without wrapping envar values. this format is used when the output is being redirected.", width, 2, indentation));
 			Console.WriteLine(Text.Wrap("--wrap=n        forces wrapping at n characters instead of the window width. enforces minimum value of 20.", width, 2, indentation));
 			Console.WriteLine();
-			Console.WriteLine(Text.Wrap("--align=[l|r]   aligns the envar name left or right. the default is right aligned (next to the equal sign).", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--align=[l|r]   aligns the envar name left or right. the default is " + (DEFAULT_ENVAR_ALIGN ? "right" : "left") + ".", width, 2, indentation));
 			Console.WriteLine();
-			Console.WriteLine(Text.Wrap("--indent=n      sets the envar name indentation. the default is " + envarIndentation + " characters.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--indent=n      sets the envar name indentation. the default is " + DEFAULT_ENVAR_INDENT + " characters.", width, 2, indentation));
 			Console.WriteLine(Text.Wrap("--no-indent     sets the envar name indentation to 0.", width, 2, indentation));
 			Console.WriteLine();
 			Console.WriteLine(Text.Wrap("--lower         lower-cases the envar names.", width, 2, indentation));

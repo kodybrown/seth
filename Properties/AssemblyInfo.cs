@@ -8,14 +8,14 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: System.Reflection.AssemblyTitle("seth ver:0.9.51031.4")]
+[assembly: System.Reflection.AssemblyTitle("seth ver:0.9.6.51031")]
 [assembly: System.Reflection.AssemblyDescription("seth")]
 [assembly: System.Reflection.AssemblyProduct("seth")]
-[assembly: System.Reflection.AssemblyCopyright("Copyright (C) 2003-2015 Kody Brown.")]
+[assembly: System.Reflection.AssemblyCopyright("Copyright (C) 2003-2015 Kody Brown (@kodybrown).")]
 [assembly: System.Runtime.InteropServices.ComVisible(false)]
 [assembly: System.CLSCompliant(false)]
 [assembly: System.Runtime.InteropServices.Guid("0F6C111B-9FE1-4828-BFCE-729E2CB8A012")]
-[assembly: System.Reflection.AssemblyVersion("0.9.51031.4")]
-[assembly: System.Reflection.AssemblyFileVersion("0.9.51031.4")]
+[assembly: System.Reflection.AssemblyVersion("0.9.6.51031")]
+[assembly: System.Reflection.AssemblyFileVersion("0.9.6.51031")]
 
 

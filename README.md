@@ -3,4 +3,4 @@ seth
 
 Displays the environment variables in a nicely formatted list
 
-This requires the [GitVersion MSBuild](https://github.com/kodybrown/GitVersion) assembly
+The [GitVersion MSBuild](https://github.com/kodybrown/GitVersion) assembly is required to compile this util (or you can remove the custom attributes in `seth.csproj`).

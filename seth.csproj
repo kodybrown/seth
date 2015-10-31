@@ -61,7 +61,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConsolePrompt.cs" />
+    <Compile Include="ConsoleEx-Prompts.cs" />
+    <Compile Include="ConsoleEx-Redirection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Text.cs" />

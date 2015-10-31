@@ -1,28 +1,38 @@
-@setlocal enabledelayedexpansion
+@setlocal EnableDelayedExpansion
 @echo off
 
-set _name=seth
-set _src=Program.cs
+if not defined bin set "bin=c:\bin"
 
-call vcvars.bat
+:init
+    set "OutputName=seth"
+    set "SourceFiles=*.cs"
 
-if exist "%_name%.exe" (
-    del /Q /F "%_name%.exe"
-)
+    where /Q csc.exe
+    if %errorlevel% NEQ 0 call "%bin%\vcvars_env.bat"
 
-csc.exe /nologo /t:exe /platform:anycpu /out:Bin\%_name%.exe %_src%
+:main
+    rem if exist "Bin\%OutputName%.exe" del /Q /F "Bin\%OutputName%.exe"
 
-if %ERRORLEVEL% equ 0 (
+    echo Building..
+
+    csc.exe /nologo /t:exe /platform:anycpu /out:Bin\%OutputName%.exe %SourceFiles%
+    if %errorlevel% NEQ 0 goto :builderror
+
     echo Built successfully..
-    if exist "Bin\%_name%.exe" (
-        if exist "C:\Kody\Root" (
-            echo Copying to root folder..
-            copy "Bin\%_name%.exe" "C:\Kody\Root\%_name%.exe" /Y
-        )
-    )
-) else (
+    echo.
+
+    if exist "Bin\%OutputName%.exe" if exist "%bin%\%OutputName%.exe" call :copyfile
+
+:end
+    endlocal
+    exit /B
+
+:builderror
     echo.
     pause
-)
+    goto :end
 
-@endlocal && exit /B 0
+:copyfile
+    echo Copying to bin folder..
+    copy /B /V /Y "Bin\%OutputName%.exe" "%bin%\%OutputName%.exe"
+    goto :eof

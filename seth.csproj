@@ -81,8 +81,8 @@
     <PostBuildEvent>if exist "C:\bin" xcopy "$(TargetPath)" "C:\bin" /y</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Label="Versioning">
-    <VersioningMajor>0</VersioningMajor>
-    <VersioningMinor>9</VersioningMinor>
+    <VersioningMajor>1</VersioningMajor>
+    <VersioningMinor>0</VersioningMinor>
     <CommitVersion>N/A</CommitVersion>
   </PropertyGroup>
   <PropertyGroup>

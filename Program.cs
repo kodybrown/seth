@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Bricksoft.PowerCode;
 
 namespace Bricksoft.DosToys.seth
@@ -51,6 +52,15 @@ namespace Bricksoft.DosToys.seth
 		private static bool? lowerKey = null;
 
 		private static string filter = "";
+		private static FilterBy filterBy = FilterBy.both;
+		private static bool use_regex = false;
+
+		public enum FilterBy
+		{
+			both,
+			name,
+			value
+		}
 
 		public static int Main( string[] arguments )
 		{
@@ -155,6 +165,14 @@ namespace Bricksoft.DosToys.seth
 						showUser = true;
 						showAll = false;
 
+					} else if (arg.Equals("name", StringComparison.CurrentCultureIgnoreCase)) {
+						filterBy = FilterBy.name;
+					} else if (arg.Equals("value", StringComparison.CurrentCultureIgnoreCase)) {
+						filterBy = FilterBy.value;
+
+					} else if (arg.Equals("regex", StringComparison.CurrentCultureIgnoreCase)) {
+						use_regex = true;
+
 					} else {
 						Console.Error.WriteLine("unknown command: " + arg);
 						return 2;
@@ -235,6 +253,8 @@ namespace Bricksoft.DosToys.seth
 				sep = " = ";
 
 			for (int n = 0; n < names.Count; n++) {
+
+				// PREPARE NAME & VALUE
 				if (lowerKey.HasValue) {
 					if (lowerKey.Value) {
 						key = names[n].ToLowerInvariant();
@@ -245,6 +265,30 @@ namespace Bricksoft.DosToys.seth
 					key = names[n];
 				}
 				value = envars[names[n]].ToString();
+
+				// FILTER
+				if (filter != null && filter.Length > 0) {
+					if (filter.StartsWith("regex:", StringComparison.InvariantCultureIgnoreCase)) {
+						use_regex = true;
+						filter = filter.Substring(6);
+					}
+
+					bool matches_name, matches_value;
+					if (use_regex) {
+						// `regex` filter
+						matches_name = Regex.IsMatch(key, filter, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+						matches_value = Regex.IsMatch(value, filter, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+					} else {
+						// `contains` filter
+						matches_name = key.IndexOf(filter, StringComparison.InvariantCultureIgnoreCase) > -1;
+						matches_value = value.IndexOf(filter, StringComparison.InvariantCultureIgnoreCase) > -1;
+					}
+					if ((filterBy == FilterBy.both && !matches_name && !matches_value)
+							|| (filterBy == FilterBy.name && !matches_name)
+							|| (filterBy == FilterBy.value && !matches_value)) {
+						continue;
+					}
+				}
 
 				bool containsPath = false;
 				string[] ar = new string[] { };
@@ -330,7 +374,7 @@ namespace Bricksoft.DosToys.seth
 			Console.WriteLine();
 			Console.WriteLine(Text.Wrap("Displays the environment variables with various options.", width, 2));
 			Console.WriteLine();
-			Console.WriteLine("USAGE: seth [options]");
+			Console.WriteLine("USAGE: seth [options] [filter]");
 			Console.WriteLine();
 			Console.WriteLine(Text.Wrap("/?, -h          show this help", width, 2, indentation));
 			Console.WriteLine(Text.Wrap("-p, --pause     pauses after each screenful (applies -pp)", width, 2, indentation));
@@ -352,6 +396,16 @@ namespace Bricksoft.DosToys.seth
 			Console.WriteLine(Text.Wrap("--process       shows only the process-level environment variables.", width, 2, indentation));
 			Console.WriteLine(Text.Wrap("--user          shows only the user environment variables.", width, 2, indentation));
 			Console.WriteLine(Text.Wrap("--all           shows all environment variables regardless of where it came from. this is the default behavior.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine("Filter options:");
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--name          indicates to only filter by comparing against the envar name.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--value         indicates to only filter by comparing against the envar's value.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("                the filter is compared against both the name and value by default.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--regex         indicates that the [filter] is a regular expression. you can also prefix the filter with `regex:` as in `seth regex:AppData$`.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("REGEX NOTE: if you are including any of the special dos symbols in your regex (such as '^', '(', ')', '<', '>', etc.), you must wrap them in quotes, for instance `seth --regex \"^AppData\"`.", width, 2, indentation - 4));
 			Console.WriteLine();
 		}
 	}

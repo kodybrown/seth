@@ -82,7 +82,7 @@
   </PropertyGroup>
   <PropertyGroup Label="Versioning">
     <VersioningMajor>1</VersioningMajor>
-    <VersioningMinor>2</VersioningMinor>
+    <VersioningMinor>3</VersioningMinor>
     <CommitVersion>N/A</CommitVersion>
   </PropertyGroup>
   <PropertyGroup>

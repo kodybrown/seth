@@ -124,12 +124,15 @@ namespace Bricksoft.DosToys.seth
 						}
 						string tmp = arg.Substring(pos + 1).Trim();
 						int tmpIndent = 0;
-						if (!int.TryParse(tmp, out tmpIndent)) {
+						if (tmp.Equals("all", StringComparison.InvariantCultureIgnoreCase)
+								|| tmp.StartsWith("max", StringComparison.InvariantCultureIgnoreCase)) {
+							envarIndentation = -1;
+						} else if (int.TryParse(tmp, out tmpIndent)) {
+							envarIndentation = tmpIndent; // Math.Max(0, tmpIndent);
+						} else {
 							Console.Error.WriteLine("invalid option: " + arg);
 							return 1;
 						}
-						envarIndentation = Math.Max(0, tmpIndent);
-
 					} else if (arg.StartsWith("align", StringComparison.CurrentCultureIgnoreCase)) {
 						int pos = arg.IndexOfAny(new char[] { '=', ':' });
 						if (pos == -1) {
@@ -186,19 +189,19 @@ namespace Bricksoft.DosToys.seth
 
 			if (showAll) {
 				// Show all..
-				Text.WriteCenteredLine(" All Environment Variables ", '-');
+				s.AppendLine().Append(Text.WriteCenteredLine(" All Environment Variables ", '-'));
 				ShowVariables(Environment.GetEnvironmentVariables(), s);
 			} else {
 				if (showMachine) {
-					Text.WriteCenteredLine(" Machine Environment Variables ", '-');
+					s.Append(Text.WriteCenteredLine(" Machine Environment Variables ", '-'));
 					ShowVariables(Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine), s);
 				}
 				if (showProcess) {
-					Text.WriteCenteredLine(" Process Environment Variables ", '-');
+					s.Append(Text.WriteCenteredLine(" Process Environment Variables ", '-'));
 					ShowVariables(Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process), s);
 				}
 				if (showUser) {
-					Text.WriteCenteredLine(" User Environment Variables ", '-');
+					s.Append(Text.WriteCenteredLine(" User Environment Variables ", '-'));
 					ShowVariables(Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User), s);
 				}
 			}
@@ -242,13 +245,17 @@ namespace Bricksoft.DosToys.seth
 
 			foreach (DictionaryEntry de in envars) {
 				names.Add(de.Key.ToString());
-				w = Math.Max(w, de.Key.ToString().Length + 1);
+				w = Math.Max(w, de.Key.ToString().Length);
 			}
 
 			names.Sort();
 
 			// Set max width, just in case
-			w = Math.Min(w, envarIndentation);
+			// If envarIndentation == -1, then use w (the max width of all names)..
+			if (envarIndentation > -1) {
+				//w = Math.Min(w, envarIndentation);
+				w = envarIndentation;
+			}
 			string key, value,
 				sep = " = ";
 
@@ -385,7 +392,7 @@ namespace Bricksoft.DosToys.seth
 			Console.WriteLine();
 			Console.WriteLine(Text.Wrap("--align=[l|r]   aligns the envar name left or right. the default is " + (DEFAULT_ENVAR_ALIGN ? "right" : "left") + ".", width, 2, indentation));
 			Console.WriteLine();
-			Console.WriteLine(Text.Wrap("--indent=n      sets the envar name indentation. the default is " + DEFAULT_ENVAR_INDENT + " characters.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--indent=n      sets the envar name indentation. the default is " + DEFAULT_ENVAR_INDENT + " characters. use `all` to align to the longest envar name.", width, 2, indentation));
 			Console.WriteLine(Text.Wrap("--no-indent     sets the envar name indentation to 0.", width, 2, indentation));
 			Console.WriteLine();
 			Console.WriteLine(Text.Wrap("--lower         lower-cases the envar names.", width, 2, indentation));

@@ -6,20 +6,13 @@ Displays the environment variables in a nicely formatted list, with new options!
 Usage:
 ------
 
-seth.exe v1.0.13.51031
-Copyright (C) 2003-2015 Kody Brown (@kodybrown).
-
-  Displays the environment variables with various options.
-
-USAGE: seth [options]
-
     >seth /?
-    seth.exe v1.0.13.51031
+    seth.exe v1.3.19.51115
     Copyright (C) 2003-2015 Kody Brown (@kodybrown).
 
       Displays the environment variables with various options.
 
-    USAGE: seth [options]
+    USAGE: seth [options] [filter]
 
       /?, -h          show this help
       -p, --pause     pauses after each screenful (applies -pp)
@@ -32,8 +25,8 @@ USAGE: seth [options]
 
       --align=[l|r]   aligns the envar name left or right. the default is left.
 
-      --indent=n      sets the envar name indentation. the default is 16
-                      characters.
+      --indent=n      sets the envar name indentation. the default is 16 characters.
+                      use `all` to align to the longest envar name.
       --no-indent     sets the envar name indentation to 0.
 
       --lower         lower-cases the envar names.
@@ -47,6 +40,21 @@ USAGE: seth [options]
       --all           shows all environment variables regardless of where it came
                       from. this is the default behavior.
 
+    Filter options:
+
+      --name          indicates to only filter by comparing against the envar name.
+      --value         indicates to only filter by comparing against the envar's
+                      value.
+                      the filter is compared against both the name and value by
+                      default.
+
+      --regex         indicates that the [filter] is a regular expression. you can
+                      also prefix the filter with `regex:` as in `seth regex:
+                      AppData$`.
+
+      REGEX NOTE: if you are including any of the special dos symbols in your regex
+                  (such as '^', '(', ')', '<', '>', etc.), you must wrap them in
+                  quotes, for instance `seth --regex "^AppData"`.
 
 Example output:
 ---------------

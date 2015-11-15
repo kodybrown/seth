@@ -26,6 +26,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -38,8 +39,13 @@ namespace Bricksoft.DosToys.seth
 		private static int DEFAULT_ENVAR_INDENT = 16;
 		private static bool DEFAULT_ENVAR_ALIGN = false;
 
-		private static bool pausePerPage = false;
-		private static bool pauseAtEnd = false;
+		private static bool configFlag = false;
+		private static Config config = new Config();
+		private static bool envFlag = false;
+		private static EnvironmentVariables envars = new EnvironmentVariables("seth_");
+
+		private static bool? pausePerPage = null;
+		private static bool? pauseAtEnd = null;
 		private static bool dontWrapOutput = false;
 		private static int width = Console.WindowWidth;
 		private static int envarIndentation = DEFAULT_ENVAR_INDENT;
@@ -64,11 +70,18 @@ namespace Bricksoft.DosToys.seth
 
 		public static int Main( string[] arguments )
 		{
-			//Console.WindowWidth = 100;
-			//Console.BufferWidth = 100;
-			//Console.WindowHeight = Console.LargestWindowHeight - 1;
-			//Console.BufferHeight = 1000;
+			// Load config file.
+			config.read(true, ".conf");
+			if (config.exists()) {
+				pausePerPage = config.get<bool?>("pause", null);
+				pauseAtEnd = config.get<bool?>("pp", null);
 
+			}
+
+			// Load env variables.
+
+
+			// Set flags from command-line.
 			for (int i = 0; i < arguments.Length; i++) {
 				string arg = arguments[i];
 				bool isOpt = false;
@@ -89,13 +102,26 @@ namespace Bricksoft.DosToys.seth
 						ShowVersion(arg.Equals("version", StringComparison.CurrentCultureIgnoreCase));
 						return 0;
 
+					} else if (arg.Equals("config", StringComparison.CurrentCultureIgnoreCase)) {
+						configFlag = true;
+					} else if (arg.Equals("env", StringComparison.CurrentCultureIgnoreCase)) {
+						envFlag = true;
+
 					} else if (arg.Equals("p", StringComparison.CurrentCultureIgnoreCase)
 							|| arg.Equals("pause", StringComparison.CurrentCultureIgnoreCase)
 							|| arg.Equals("pause-per-page", StringComparison.CurrentCultureIgnoreCase)) {
 						pausePerPage = true;
+					} else if (arg.Equals("!p", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("!pause", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("!pause-per-page", StringComparison.CurrentCultureIgnoreCase)) {
+						pausePerPage = false;
+
 					} else if (arg.Equals("pp", StringComparison.CurrentCultureIgnoreCase)
 							|| arg.Equals("pause-at-end", StringComparison.CurrentCultureIgnoreCase)) {
 						pauseAtEnd = true;
+					} else if (arg.Equals("!pp", StringComparison.CurrentCultureIgnoreCase)
+							|| arg.Equals("!pause-at-end", StringComparison.CurrentCultureIgnoreCase)) {
+						pauseAtEnd = false;
 
 					} else if (arg.Equals("no-wrap", StringComparison.CurrentCultureIgnoreCase)) {
 						dontWrapOutput = true;
@@ -185,6 +211,10 @@ namespace Bricksoft.DosToys.seth
 				}
 			}
 
+			if (configFlag || envFlag) {
+				return HandleConfigFlag();
+			}
+
 			StringBuilder s = new StringBuilder();
 
 			if (showAll) {
@@ -212,7 +242,7 @@ namespace Bricksoft.DosToys.seth
 			} else {
 				int count = 0;
 
-				if (pausePerPage) {
+				if (pausePerPage.HasValue && pausePerPage.Value) {
 					string[] lines = s.ToString().Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 					int h = Console.WindowHeight;
 
@@ -228,7 +258,8 @@ namespace Bricksoft.DosToys.seth
 					Console.Out.Write(s.ToString());
 				}
 
-				if (pauseAtEnd && (!pausePerPage || count > 0)) {
+				if ((pauseAtEnd.HasValue && pauseAtEnd.Value)
+						&& (!(pausePerPage.HasValue && pausePerPage.Value) || count > 0)) {
 					ConsoleEx.SimplePressAnyKey();
 				}
 			}
@@ -361,6 +392,21 @@ namespace Bricksoft.DosToys.seth
 			}
 		}
 
+		private static int HandleConfigFlag()
+		{
+			if (configFlag) {
+
+
+			}
+
+			if (envFlag) {
+
+
+			}
+
+			return 0;
+		}
+
 		private static void ShowVersion( bool fullVersion )
 		{
 			FileVersionInfo fi = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
@@ -387,18 +433,6 @@ namespace Bricksoft.DosToys.seth
 			Console.WriteLine(Text.Wrap("-p, --pause     pauses after each screenful (applies -pp)", width, 2, indentation));
 			Console.WriteLine(Text.Wrap("-pp             pauses at the end", width, 2, indentation));
 			Console.WriteLine();
-			Console.WriteLine(Text.Wrap("--no-wrap       outputs formatted output, but without wrapping envar values. this format is used when the output is being redirected.", width, 2, indentation));
-			Console.WriteLine(Text.Wrap("--wrap=n        forces wrapping at n characters instead of the window width. enforces minimum value of 20.", width, 2, indentation));
-			Console.WriteLine();
-			Console.WriteLine(Text.Wrap("--align=[l|r]   aligns the envar name left or right. the default is " + (DEFAULT_ENVAR_ALIGN ? "right" : "left") + ".", width, 2, indentation));
-			Console.WriteLine();
-			Console.WriteLine(Text.Wrap("--indent=n      sets the envar name indentation. the default is " + DEFAULT_ENVAR_INDENT + " characters. use `all` to align to the longest envar name.", width, 2, indentation));
-			Console.WriteLine(Text.Wrap("--no-indent     sets the envar name indentation to 0.", width, 2, indentation));
-			Console.WriteLine();
-			Console.WriteLine(Text.Wrap("--lower         lower-cases the envar names.", width, 2, indentation));
-			Console.WriteLine(Text.Wrap("--upper         upper-cases the envar names.", width, 2, indentation));
-			Console.WriteLine(Text.Wrap("                if --lower and --upper are not specified, the envar name is not modified.", width, 2, indentation));
-			Console.WriteLine();
 			Console.WriteLine(Text.Wrap("--machine       shows only the machine-level environment variables.", width, 2, indentation));
 			Console.WriteLine(Text.Wrap("--process       shows only the process-level environment variables.", width, 2, indentation));
 			Console.WriteLine(Text.Wrap("--user          shows only the user environment variables.", width, 2, indentation));
@@ -413,6 +447,30 @@ namespace Bricksoft.DosToys.seth
 			Console.WriteLine(Text.Wrap("--regex         indicates that the [filter] is a regular expression. you can also prefix the filter with `regex:` as in `seth regex:AppData$`.", width, 2, indentation));
 			Console.WriteLine();
 			Console.WriteLine(Text.Wrap("REGEX NOTE: if you are including any of the special dos symbols in your regex (such as '^', '(', ')', '<', '>', etc.), you must wrap them in quotes, for instance `seth --regex \"^AppData\"`.", width, 2, indentation - 4));
+			Console.WriteLine();
+			Console.WriteLine("Formatting options:");
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--lower         lower-cases the envar names.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--upper         upper-cases the envar names.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("                if --lower and --upper are not specified, the envar name is not modified.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--no-wrap       outputs formatted output, but without wrapping envar values. this format is used when the output is being redirected.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--wrap=n        forces wrapping at n characters instead of the window width. enforces minimum value of 20.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--align=[l|r]   aligns the envar name left or right. the default is " + (DEFAULT_ENVAR_ALIGN ? "right" : "left") + ".", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--indent=n      sets the envar name indentation. the default is " + DEFAULT_ENVAR_INDENT + " characters. use `all` to align to the longest envar name.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("--no-indent     sets the envar name indentation to 0.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine("Config options:");
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--config        updates the config file with the specified options.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("                using the --config flag by itself displays the current config options.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("--env           updates the environment variables with the specified options.", width, 2, indentation));
+			Console.WriteLine(Text.Wrap("                using the --env flag by itself displays the current environment variables.", width, 2, indentation));
+			Console.WriteLine();
+			Console.WriteLine(Text.Wrap("OPTION PRECEDENCE: options are loaded first from the config file, then the environment variables, and finally the command-line arguments. so, the command-line arguments take precedence over the envars and the envars take precedence over the config file.", width, 2, indentation + 3));
 			Console.WriteLine();
 		}
 	}

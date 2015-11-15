@@ -11,7 +11,7 @@ if not defined bin set "bin=c:\bin"
     if %errorlevel% NEQ 0 call "%bin%\vcvars_env.bat"
 
 :main
-    rem if exist "Bin\%OutputName%.exe" del /Q /F "Bin\%OutputName%.exe"
+    if exist "Bin\%OutputName%.exe" del /Q /F "Bin\%OutputName%.exe"
 
     echo Building..
 

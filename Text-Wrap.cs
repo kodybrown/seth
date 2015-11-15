@@ -1,4 +1,4 @@
-﻿/*!
+/*!
 	Copyright (C) 2003-2015 Kody Brown (kody@bricksoft.com).
 	
 	MIT License:
@@ -33,7 +33,39 @@ namespace Bricksoft.PowerCode
 	/// </summary>
 	public partial class Text
 	{
-		internal static char[] lineBreaks = new char[] { ' ', '.', ',', '-', ':', ';', '>', '"', ']', '}', '!', '?', ')', '\\', '/' };
+		/// <summary>
+		/// Gets or sets the characters that lines should be wrapped on.
+		/// </summary>
+		public static List<char> LineBreaks { get; set; }
+
+		/// <summary>
+		/// Gets or set a list of overrides to prevent inserting a line between these and a following letter/word.
+		/// </summary>
+		public static List<string> LineBreakOverrides { get; set; }
+
+		/// <summary>
+		/// Gets or sets the line suffix. This is the string to show at the end of a line when it is wrapped.
+		/// </summary>
+		public static string LineWrapSuffix { get; set; }
+
+		public static bool ShowLineSuffix { get; set; }
+
+		static Text()
+		{
+			LineBreaks = new List<char>(new char[] { ' ', '.', ',', ':', ';', '>', '-', ']', '}', '!', '?', ')', '\\', '/' });
+			LineBreakOverrides = new List<string>(new string[] { "--", " /", " `", "\"" });
+			LineWrapSuffix = new string((char)26, 1);
+			ShowLineSuffix = false;
+		}
+
+		#region TODO / FUTURE - MinimumWidth
+		//public static int MinimumWidth { get; set; }
+
+		//static Text()
+		//{
+		//	MinimumWidth = 1;
+		//}
+		#endregion
 
 		/* ----- WrapText() ----- */
 
@@ -81,17 +113,47 @@ namespace Bricksoft.PowerCode
 		public static string Wrap( string Text, int[] WrapWidths, int[] Indentations )
 		{
 			List<string> ar;
-			string temp;
-			int brk;
-			int w;
-			int wrapIndex, idIndex;
+			string temp, tmp;
+			int brk, w, wrapIndex, idIndex;
 			List<string> ids;
+			bool showSuffix = false;
+			string lineSuffix = "";
+			int lineSuffixLen = 0;
+			char[] lineBreaks = LineBreaks.ToArray();
 
 			if (WrapWidths == null || WrapWidths.Length == 0) {
 				WrapWidths = new int[] { Console.WindowWidth };
+			} else {
+				for (int i = 0; i < WrapWidths.Length; i++) {
+					if (WrapWidths[i] == 0) {
+						WrapWidths[i] = Console.WindowWidth;
+					} else if (WrapWidths[i] < 0) {
+						WrapWidths[i] = Console.WindowWidth - Math.Abs(WrapWidths[i]);
+					}
+					if (WrapWidths[i] < 1) {
+						WrapWidths[i] = 1;
+					}
+				}
 			}
+
 			if (Indentations == null || Indentations.Length == 0) {
 				Indentations = new int[] { 0 };
+			} else {
+				for (int i = 0; i < Indentations.Length; i++) {
+					if (Indentations[i] < 0) {
+						Indentations[i] = 0;
+					}
+				}
+			}
+
+			if (ShowLineSuffix && LineWrapSuffix != null && LineWrapSuffix.Length > 0) {
+				showSuffix = true;
+				if (LineWrapSuffix[0] != ' ') {
+					lineSuffix = " " + LineWrapSuffix;
+				} else {
+					lineSuffix = LineWrapSuffix;
+				}
+				lineSuffixLen = LineWrapSuffix.Length;
 			}
 
 			brk = -1;
@@ -114,25 +176,43 @@ namespace Bricksoft.PowerCode
 			}
 
 			for (int i = 0; i < ar.Count; i++) {
-				w = WrapWidths[wrapWidthIdx()] - Indentations[identIdx()] - 1;
+				w = WrapWidths[wrapWidthIdx()] - Indentations[identIdx()];
+
+				// Ensure the width isn't so small, that it causes an infinite loop..
+				w = Math.Max(w, 1);
+
 				if (ar[i].Length > w) {
 					temp = ar[i];
 					brk = temp.Substring(0, w).LastIndexOfAny(lineBreaks) + 1;
 
-					ar[i] = ids[identIdx()] + temp.Substring(0, brk);
-					wrapIndex++;
-					idIndex++;
-					i++;
+					brk = checkOverrides(temp, brk);
+					if (showSuffix && brk > w - lineSuffixLen) {
+						brk = temp.Substring(0, w - lineSuffixLen).LastIndexOfAny(lineBreaks) + 1;
+					}
 
-					//temp = temp.Substring(brk);
+					tmp = ids[identIdx()] + temp.Substring(0, brk);
+
 					if (brk < temp.Length - 1 && temp[brk] == ' ') {
 						temp = temp.Substring(brk + 1);
 					} else {
 						temp = temp.Substring(brk);
 					}
 
+					if (showSuffix && temp.Length > 0) {
+						tmp += (tmp[tmp.Length - 1] == ' ') ? lineSuffix.TrimStart() : lineSuffix;
+					}
+					ar[i] = tmp.TrimEnd();
+
 					while (temp.Length > 0) {
-						w = WrapWidths[wrapWidthIdx()] - Indentations[identIdx()] - 1;
+						i++;
+						wrapIndex++;
+						idIndex++;
+
+						w = WrapWidths[wrapWidthIdx()] - Indentations[identIdx()];
+
+						// Ensure the width isn't so small, that it causes an infinite loop..
+						w = Math.Max(w, 1);
+
 						if (temp.Length > w) {
 							brk = temp.Substring(0, w).LastIndexOfAny(lineBreaks) + 1;
 							if (brk == 0) {
@@ -144,16 +224,23 @@ namespace Bricksoft.PowerCode
 							brk = temp.Length;
 						}
 
-						ar.Insert(i, ids[identIdx()] + temp.Substring(0, brk));
-						wrapIndex++;
-						idIndex++;
-						i++;
+						brk = checkOverrides(temp, brk);
+						if (showSuffix && brk > w - lineSuffixLen) {
+							brk = temp.Substring(0, w - lineSuffixLen).LastIndexOfAny(lineBreaks) + 1;
+						}
+
+						tmp = ids[identIdx()] + temp.Substring(0, brk);
 
 						if (brk < temp.Length - 1 && temp[brk] == ' ') {
 							temp = temp.Substring(brk + 1);
 						} else {
 							temp = temp.Substring(brk);
 						}
+
+						if (showSuffix && temp.Length > 0) {
+							tmp += (tmp[tmp.Length - 1] == ' ') ? lineSuffix.TrimStart() : lineSuffix;
+						}
+						ar.Insert(i, tmp.TrimEnd());
 					}
 				} else {
 					ar[i] = ids[identIdx()] + ar[i];
@@ -165,6 +252,26 @@ namespace Bricksoft.PowerCode
 
 			//return string.Join(Environment.NewLine + padding, ar);
 			return string.Join("\n", ar);
+		}
+
+		private static int checkOverrides( string temp, int brk )
+		{
+			if (temp.Length == brk) {
+				return brk;
+			}
+
+			for (int l = 0; l < LineBreakOverrides.Count; l++) {
+				string lb = LineBreakOverrides[l];
+				int len = lb.Length;
+				for (int x = len; x >= 0; x--) {
+					if (temp.Length > brk - x && temp.Substring(brk - x, len) == lb) {
+						brk = brk - x;
+						break;
+					}
+				}
+			}
+
+			return brk;
 		}
 
 		public static string WriteCenteredLine( string content, char ch = ' ' )

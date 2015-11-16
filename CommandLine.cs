@@ -355,7 +355,7 @@ namespace Bricksoft.PowerCode
 			}
 		}
 
-		public void Replace( string Key, string NewKey )
+		public void RenameKey( string Key, string NewKey )
 		{
 			if (Contains(Key) && !Contains(NewKey)) {
 				data.Add(NewKey, data[Key]);
@@ -877,6 +877,9 @@ namespace Bricksoft.PowerCode
 		public string Description { get { return _description ?? (_description = string.Empty); } set { _description = value ?? string.Empty; } }
 		private string _description = string.Empty;
 
+		public string AdditionalNotes { get { return _additionalNotes ?? (_additionalNotes = string.Empty); } set { _additionalNotes = value ?? string.Empty; } }
+		private string _additionalNotes = string.Empty;
+
 		/// <summary>Gets or sets the additional help content that is displayed when you call `--help cmd`, where cmd is the current CommandLineArg.</summary>
 		public string HelpContent { get { return _helpContent ?? (_helpContent = string.Empty); } set { _helpContent = value ?? string.Empty; } }
 		private string _helpContent = string.Empty;
@@ -886,9 +889,11 @@ namespace Bricksoft.PowerCode
 		public string MissingText { get { return _missingText ?? (_missingText = string.Empty); } set { _missingText = value ?? string.Empty; } }
 		private string _missingText = string.Empty;
 
+		/// <summary>Gets or sets whether the current command-line argument or flag is required.</summary>
 		public bool Required { get { return _required; } set { _required = value; } }
 		private bool _required = false;
 
+		/// <summary>Gets or sets the keys to check for on the command-line. These keys are displayed in the usage.</summary>
 		public List<string> Keys { get { return _keys ?? (_keys = new List<string>()); } set { _keys = value ?? new List<string>(); } }
 		private List<string> _keys = new List<string>();
 
@@ -899,6 +904,32 @@ namespace Bricksoft.PowerCode
 				//	throw new ArgumentException("The items in the Keys property must not be prefixed by - or /. The correct prefix will be displayed in usage based on the Options property.");
 				//}
 				this.Keys.Add(k);
+			}
+		}
+
+		/// <summary>Gets or sets additional keys to check for on the command-line, but that aren't displayed in the usage.</summary>
+		public List<string> ExtraKeys { get { return _extraKeys ?? (_extraKeys = new List<string>()); } set { _extraKeys = value ?? new List<string>(); } }
+		private List<string> _extraKeys = new List<string>();
+
+		public void AddExtraKeys( params string[] Keys )
+		{
+			foreach (string k in Keys) {
+				//if (k.StartsWith("/") || k.StartsWith("-")) {
+				//	throw new ArgumentException("The items in the Keys property must not be prefixed by - or /. The correct prefix will be displayed in usage based on the Options property.");
+				//}
+				this.ExtraKeys.Add(k);
+			}
+		}
+
+		/// <summary>Gets all keys (both Keys and ExtraKeys).</summary>
+		public List<string> AllKeys
+		{
+			get
+			{
+				List<string> allKeys = new List<string>();
+				allKeys.AddRange(this.Keys);
+				allKeys.AddRange(this.ExtraKeys);
+				return allKeys;
 			}
 		}
 
@@ -939,6 +970,9 @@ namespace Bricksoft.PowerCode
 		/// </summary>
 		public string ExpressionLabel { get { return _expressionLabel ?? (_expressionLabel = string.Empty); } set { _expressionLabel = value ?? string.Empty; } }
 		private string _expressionLabel = string.Empty;
+
+		public string ExpressionDescription { get { return _expressionDescriptiom ?? (_expressionDescriptiom = string.Empty); } set { _expressionDescriptiom = value ?? string.Empty; } }
+		private string _expressionDescriptiom= string.Empty;
 
 		/// <summary>
 		/// The allowed options for the current CommandLineArg..
@@ -1243,7 +1277,6 @@ namespace Bricksoft.PowerCode
 	/// <summary>
 	/// Indicates what to expect and what is allowed for the command-line argument's values.
 	/// </summary>
-	[Flags]
 	public enum CommandLineArgumentOptions
 	{
 		///// <summary></summary>

@@ -32,13 +32,15 @@ namespace Bricksoft.PowerCode
 	/// </summary>
 	public class EnvironmentVariables
 	{
-		public string prefix
+		private char[] disallowed = new char[] { '`', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '[', '}', '}', '|', '\\', ':', ';', '"', '\'', '<', '>', ',', '.', '?', '/' };
+
+		public string Prefix
 		{
 			get { return _prefix + "_"; }
 			set
 			{
-				if (value.IndexOfAny(new char[] { '`', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '[', '}', '}', '|', '\\', ':', ';', '"', '\'', '<', '>', ',', '.', '?', '/' }) > -1) {
-					throw new ArgumentException("only alphanumeric characters and underscores (_) are allowed for environment variable names.");
+				if (value.IndexOfAny(disallowed) > -1) {
+					throw new ArgumentException("Only alphanumeric characters and underscores (_) are allowed for environment variable names.");
 				}
 				_prefix = value != null && value.Trim().Length > 0 ? value.Trim() : "";
 				if (_prefix.EndsWith("_")) {
@@ -48,13 +50,13 @@ namespace Bricksoft.PowerCode
 		}
 		private string _prefix = "";
 
-		public string postfix
+		public string Postfix
 		{
 			get { return _postfix + "_"; }
 			set
 			{
-				if (value.IndexOfAny(new char[] { '`', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '[', '}', '}', '|', '\\', ':', ';', '"', '\'', '<', '>', ',', '.', '?', '/' }) > -1) {
-					throw new ArgumentException("only alphanumeric characters and underscores (_) are allowed for environment variable names.");
+				if (value.IndexOfAny(disallowed) > -1) {
+					throw new ArgumentException("Only alphanumeric characters and underscores (_) are allowed for environment variable names.");
 				}
 				_postfix = value != null && value.Trim().Length > 0 ? value.Trim() : "";
 				if (_postfix.EndsWith("_")) {
@@ -64,26 +66,22 @@ namespace Bricksoft.PowerCode
 		}
 		private string _postfix = "";
 
-		public EnvironmentVariableTarget target
-		{
-			get { return _target; }
-			set { _target = value; }
-		}
+		public EnvironmentVariableTarget Target { get { return _target; } set { _target = value; } }
 		private EnvironmentVariableTarget _target;
 
 
 		public EnvironmentVariables()
 		{
-			this.prefix = "_";
-			this.postfix = "";
-			this.target = EnvironmentVariableTarget.Process;
+			this.Prefix = "_";
+			this.Postfix = "";
+			this.Target = EnvironmentVariableTarget.Process;
 		}
 
-		public EnvironmentVariables( string prefix, string postfix = "", EnvironmentVariableTarget target = EnvironmentVariableTarget.Process )
+		public EnvironmentVariables( string Prefix, string Postfix = "", EnvironmentVariableTarget Target = EnvironmentVariableTarget.Process )
 		{
-			this.prefix = prefix;
-			this.postfix = postfix;
-			this.target = target;
+			this.Prefix = Prefix;
+			this.Postfix = Postfix;
+			this.Target = Target;
 		}
 
 
@@ -94,14 +92,14 @@ namespace Bricksoft.PowerCode
 		/// <remarks>
 		/// If prefix (and postfix) is empty, ALL environment variables are returned.
 		/// </remarks>
-		public Dictionary<string, string> all( EnvironmentVariableTarget target = EnvironmentVariableTarget.Process )
+		public Dictionary<string, string> GetAll( EnvironmentVariableTarget Target = EnvironmentVariableTarget.Process )
 		{
 			Dictionary<string, string> l = new Dictionary<string, string>();
 
-			foreach (KeyValuePair<string, string> p in Environment.GetEnvironmentVariables(target)) {
-				if ((prefix.Length == 0 && postfix.Length == 0)
-						|| (p.Key.StartsWith(prefix, StringComparison.CurrentCultureIgnoreCase)
-						 && p.Key.EndsWith(postfix, StringComparison.CurrentCultureIgnoreCase))) {
+			foreach (KeyValuePair<string, string> p in Environment.GetEnvironmentVariables(Target)) {
+				if ((Prefix.Length == 0 && Postfix.Length == 0)
+						|| (p.Key.StartsWith(Prefix, StringComparison.CurrentCultureIgnoreCase)
+						 && p.Key.EndsWith(Postfix, StringComparison.CurrentCultureIgnoreCase))) {
 					l.Add(p.Key, p.Value);
 				}
 			}
@@ -116,15 +114,15 @@ namespace Bricksoft.PowerCode
 		/// <remarks>
 		/// If prefix (and postfix) is empty, ALL environment variable names are returned.
 		/// </remarks>
-		public List<string> keys( EnvironmentVariableTarget target = EnvironmentVariableTarget.Process )
+		public List<string> GetKeys( EnvironmentVariableTarget Target = EnvironmentVariableTarget.Process )
 		{
 			List<string> l = new List<string>();
 
-			foreach (KeyValuePair<string, string> p in Environment.GetEnvironmentVariables(target)) {
+			foreach (KeyValuePair<string, string> p in Environment.GetEnvironmentVariables(Target)) {
 				//if (prefix.Length == 0 || p.Key.StartsWith(prefix, StringComparison.CurrentCultureIgnoreCase)) {
-				if ((prefix.Length == 0 && postfix.Length == 0)
-					 || (p.Key.StartsWith(prefix, StringComparison.CurrentCultureIgnoreCase)
-						&& p.Key.EndsWith(postfix, StringComparison.CurrentCultureIgnoreCase))) {
+				if ((Prefix.Length == 0 && Postfix.Length == 0)
+						|| (p.Key.StartsWith(Prefix, StringComparison.CurrentCultureIgnoreCase)
+							&& p.Key.EndsWith(Postfix, StringComparison.CurrentCultureIgnoreCase))) {
 					l.Add(p.Key);
 				}
 			}
@@ -132,22 +130,29 @@ namespace Bricksoft.PowerCode
 			return l;
 		}
 
+		public static bool ExistsGlobally( string Key ) { return ContainsGlobally(Key); }
 
-		public bool Exists( string key ) { return contains(key); }
-		public bool Contains( string key ) { return contains(key); }
-		public bool Contains( string key, EnvironmentVariableTarget target ) { return contains(key, target); }
+		public static bool ContainsGlobally( string Key, EnvironmentVariableTarget Target = EnvironmentVariableTarget.Process )
+		{
+			if (Environment.GetEnvironmentVariable(Key, Target) != null) {
+				return true;
+			}
+			return false;
+		}
+
+		public bool Exists( string Key ) { return Contains(Key); }
 
 		/// <summary>
 		/// Returns whether the specified environment variable exists.
 		/// The key is automatically prefixed by this instance's prefix property.
-		/// The target (scope) is specified by <paramref name="target"/>.
+		/// The target (scope) is specified by <paramref name="Target"/>.
 		/// </summary>
-		/// <param name="key"></param>
-		/// <param name="target"></param>
+		/// <param name="Key"></param>
+		/// <param name="Target"></param>
 		/// <returns></returns>
-		public bool contains( string key, EnvironmentVariableTarget target = EnvironmentVariableTarget.Process )
+		public bool Contains( string Key, EnvironmentVariableTarget Target = EnvironmentVariableTarget.Process )
 		{
-			if (Environment.GetEnvironmentVariable(prefix + key + postfix, target) != null) {
+			if (Environment.GetEnvironmentVariable(Prefix + Key + Postfix, Target) != null) {
 				return true;
 			}
 			return false;
@@ -160,22 +165,22 @@ namespace Bricksoft.PowerCode
 		/// </summary>
 		/// <param name="key"></param>
 		/// <returns></returns>
-		public int indexOfAny( params string[] keys )
+		public int IndexOfAny( params string[] Keys )
 		{
-			return indexOfAny(EnvironmentVariableTarget.Process, keys);
+			return IndexOfAny(EnvironmentVariableTarget.Process, Keys);
 		}
 
 		/// <summary>
 		/// Returns the index of the first environment variable that exists.
-		/// The target (scope) is specified by <paramref name="target"/>.
+		/// The target (scope) is specified by <paramref name="Target"/>.
 		/// </summary>
-		/// <param name="target"></param>
+		/// <param name="Target"></param>
 		/// <param name="key"></param>
 		/// <returns></returns>
-		public int indexOfAny( EnvironmentVariableTarget target, params string[] keys )
+		public int IndexOfAny( EnvironmentVariableTarget Target, params string[] Keys )
 		{
-			for (int i = 0; i < keys.Length; i++) {
-				if (Environment.GetEnvironmentVariable(prefix + keys[i] + postfix, target) != null) {
+			for (int i = 0; i < Keys.Length; i++) {
+				if (Environment.GetEnvironmentVariable(Prefix + Keys[i] + Postfix, Target) != null) {
 					return i;
 				}
 			}
@@ -201,8 +206,8 @@ namespace Bricksoft.PowerCode
 				throw new InvalidOperationException("key is required");
 			}
 
-			if (Environment.GetEnvironmentVariable(prefix + key + postfix, target) != null) {
-				return getAttrValue<T>(Environment.GetEnvironmentVariable(prefix + key + postfix, target), defaultValue, separator);
+			if (Environment.GetEnvironmentVariable(Prefix + key + Postfix, target) != null) {
+				return GetAttrValue<T>(Environment.GetEnvironmentVariable(Prefix + key + Postfix, target), defaultValue, separator);
 			}
 
 			return defaultValue;
@@ -227,7 +232,7 @@ namespace Bricksoft.PowerCode
 			}
 
 			if (Environment.GetEnvironmentVariable(key, target) != null) {
-				return getAttrValue<T>(Environment.GetEnvironmentVariable(key, target), defaultValue, separator);
+				return GetAttrValue<T>(Environment.GetEnvironmentVariable(key, target), defaultValue, separator);
 			}
 
 			return defaultValue;
@@ -253,7 +258,7 @@ namespace Bricksoft.PowerCode
 			return global(keys[0], defaultValue);
 		}
 
-		private T getAttrValue<T>( string keydata, T defaultValue = default(T), string separator = "||" )
+		private T GetAttrValue<T>( string keydata, T defaultValue = default(T), string separator = "||" )
 		{
 			if (typeof(T) == typeof(bool) || typeof(T).IsSubclassOf(typeof(bool))) {
 				if ((object)keydata != null) {

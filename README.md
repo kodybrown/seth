@@ -7,7 +7,7 @@ Usage:
 ------
 
     >seth /?
-    seth.exe v1.3.19.51115
+    seth.exe v1.3.22.51115
     Copyright (C) 2003-2015 Kody Brown (@kodybrown).
 
       Displays the environment variables with various options.
@@ -17,22 +17,6 @@ Usage:
       /?, -h          show this help
       -p, --pause     pauses after each screenful (applies -pp)
       -pp             pauses at the end
-
-      --no-wrap       outputs formatted output, but without wrapping envar values.
-                      this format is used when the output is being redirected.
-      --wrap=n        forces wrapping at n characters instead of the window width.
-                      enforces minimum value of 20.
-
-      --align=[l|r]   aligns the envar name left or right. the default is left.
-
-      --indent=n      sets the envar name indentation. the default is 16 characters.
-                      use `all` to align to the longest envar name.
-      --no-indent     sets the envar name indentation to 0.
-
-      --lower         lower-cases the envar names.
-      --upper         upper-cases the envar names.
-                      if --lower and --upper are not specified, the envar name is
-                      not modified.
 
       --machine       shows only the machine-level environment variables.
       --process       shows only the process-level environment variables.
@@ -55,6 +39,40 @@ Usage:
       REGEX NOTE: if you are including any of the special dos symbols in your regex
                   (such as '^', '(', ')', '<', '>', etc.), you must wrap them in
                   quotes, for instance `seth --regex "^AppData"`.
+
+    Formatting options:
+
+      --lower         lower-cases the envar names.
+      --upper         upper-cases the envar names.
+                      if --lower and --upper are not specified, the envar name is
+                      not modified.
+
+      --no-wrap       outputs formatted output, but without wrapping envar values.
+                      this format is used when the output is being redirected.
+      --wrap=n        forces wrapping at n characters instead of the window width.
+                      enforces minimum value of 20.
+
+      --align=[l|r]   aligns the envar name left or right. the default is left.
+
+      --indent=n      sets the envar name indentation. the default is 16 characters.
+                      use `all` to align to the longest envar name.
+      --no-indent     sets the envar name indentation to 0.
+
+    Config options:
+
+      --config        updates the config file with the specified options.
+                      using the --config flag by itself displays the current config
+                      options.
+
+      --env           updates the environment variables with the specified options.
+                      using the --env flag by itself displays the current
+                      environment variables.
+
+      OPTION PRECEDENCE: options are loaded first from the config file, then the
+                         environment variables, and finally the command-line
+                         arguments. so, the command-line arguments take precedence
+                         over the envars and the envars take precedence over the
+                         config file.
 
 Example output:
 ---------------

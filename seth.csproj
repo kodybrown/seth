@@ -104,8 +104,18 @@ if exist "$(ProjectDir)..\Bin" xcopy "$(TargetPath)" "$(ProjectDir)..\Bin" /y</P
       <Output TaskParameter="FormattedTime" PropertyName="BuildDate" />
       <Output TaskParameter="Year" PropertyName="Year" />
     </Time>
-    <AssemblyInfo CodeLanguage="CS" OutputFile="Properties\AssemblyInfo.cs" AssemblyTitle="seth ver:$(VersioningMajor).$(VersioningMinor).$(CommitCount).$(BuildDate.Substring(1))" AssemblyDescription="seth" AssemblyCompany="" AssemblyProduct="seth" AssemblyCopyright="Copyright (C) 2003-$(Year) Kody Brown (@kodybrown)." ComVisible="false" CLSCompliant="false" Guid="0F6C111B-9FE1-4828-BFCE-729E2CB8A012" AssemblyVersion="$(VersioningMajor).$(VersioningMinor).$(CommitCount).$(BuildDate.Substring(1))" AssemblyFileVersion="$(VersioningMajor).$(VersioningMinor).$(CommitCount).$(BuildDate.Substring(1))" />
-    <Message Text="$(VersioningMajor).$(VersioningMinor).$(CommitCount).$(BuildDate.Substring(1))" />
+    <AssemblyInfo CodeLanguage="CS"
+		OutputFile="Properties\AssemblyInfo.cs"
+		AssemblyTitle="seth"
+        AssemblyDescription="Displays the current environment variables. Full version: $(VersioningMajor).$(VersioningMinor).$(CommitCount), date: $(Year)-$(BuildDate.Substring(2,2))-$(BuildDate.Substring(4,2))"
+		AssemblyCompany=""
+		AssemblyProduct="seth"
+		AssemblyCopyright="Copyright (C) 2003-$(Year) Kody Brown (@kodybrown)."
+		ComVisible="false" CLSCompliant="false"
+		Guid="0F6C111B-9FE1-4828-BFCE-729E2CB8A012"
+		AssemblyVersion="$(VersioningMajor).$(VersioningMinor).$(CommitCount).$(BuildDate.Substring(1))"
+		AssemblyFileVersion="$(VersioningMajor).$(VersioningMinor).$(CommitCount).$(BuildDate.Substring(1))" />
+    <Message Text="Stamping version as: $(VersioningMajor).$(VersioningMinor).$(CommitCount).$(BuildDate.Substring(1))" />
   </Target>
   <Target Name="AfterBuild">
   </Target>

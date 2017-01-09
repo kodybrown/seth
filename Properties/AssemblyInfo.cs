@@ -8,14 +8,15 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: System.Reflection.AssemblyTitle("seth ver:1.3.22.51115")]
-[assembly: System.Reflection.AssemblyDescription("seth")]
+[assembly: System.Reflection.AssemblyTitle("seth")]
+[assembly: System.Reflection.AssemblyDescription("Displays the current environment variables. Full version: 1.3.24, date: 2015-12-2" +
+    "9")]
 [assembly: System.Reflection.AssemblyProduct("seth")]
 [assembly: System.Reflection.AssemblyCopyright("Copyright (C) 2003-2015 Kody Brown (@kodybrown).")]
 [assembly: System.Runtime.InteropServices.ComVisible(false)]
 [assembly: System.CLSCompliant(false)]
 [assembly: System.Runtime.InteropServices.Guid("0F6C111B-9FE1-4828-BFCE-729E2CB8A012")]
-[assembly: System.Reflection.AssemblyVersion("1.3.22.51115")]
-[assembly: System.Reflection.AssemblyFileVersion("1.3.22.51115")]
+[assembly: System.Reflection.AssemblyVersion("1.3.24.51229")]
+[assembly: System.Reflection.AssemblyFileVersion("1.3.24.51229")]
 
 
